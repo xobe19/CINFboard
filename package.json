@@ -1,0 +1,19 @@
+{
+  "name": "whiteboard",
+  "version": "1.0.0",
+  "description": "a simple whiteboard",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack && chrome C:\\Users\\Hitesh\\whiteboard\\dist\\index.html"
+  },
+  "type": "module",
+  "author": "Hitesh",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "webpack": "^5.92.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
