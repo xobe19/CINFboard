@@ -11,7 +11,7 @@ import React, {
   useReducer,
 } from "react";
 import "./index.css";
-import { Line, slope } from "./line.ts";
+import { Line, dist, slope } from "./line.ts";
 const root = createRoot(document.getElementById("root")!);
 enum Shape {
   rect,
@@ -31,14 +31,7 @@ let MatrixProd = (A, B) =>
   A.map((row, i) =>
     B[0].map((_, j) => row.reduce((acc, _, n) => acc + A[i][n] * B[n][j], 0))
   );
-function scaleXX(x, fac) {
-  // return x;
-  const transMatrix = [
-    [fac, 0],
-    [0, 1],
-  ];
-  return MatrixProd(transMatrix, [[x], [0]])[0][0];
-}
+
 // p1 and p2 are opp to each other
 
 function findNewOtherTwo(p1, p2, slope) {
@@ -55,7 +48,14 @@ function findNewOtherTwo(p1, p2, slope) {
 
   return [l1.findIntersection(l4), l2.findIntersection(l3)];
 }
-
+function scaleX(x, y, fac) {
+  // return x;
+  const transMatrix = [
+    [fac, 0],
+    [0, 1],
+  ];
+  return MatrixProd(transMatrix, [[x], [y]]).flat();
+}
 function scaleXY(y, fac) {
   // return y;
   const transMatrix = [
@@ -64,14 +64,14 @@ function scaleXY(y, fac) {
   ];
   return MatrixProd(transMatrix, [[0], [y]])[1][0];
 }
-function scaleYX(x, fac) {
+function scaleY(x, y, fac) {
   // return x;
   const transMatrix = [
     [1, 0],
     [0, fac],
   ];
 
-  return MatrixProd(transMatrix, [[x], [0]])[0][0];
+  return MatrixProd(transMatrix, [[x], [y]]).flat();
 }
 function scaleYY(y, fac) {
   // return y;
@@ -82,7 +82,32 @@ function scaleYY(y, fac) {
 
   return MatrixProd(transMatrix, [[0], [y]])[1][0];
 }
-function ShapeSettings({ canvasContext, rotations, setShapeIndexRef }) {
+
+function rotate(x, y, rad) {
+  const transMatrix = [
+    [Math.cos(rad), -Math.sin(rad)],
+    [Math.sin(rad), Math.cos(rad)],
+  ];
+
+  return MatrixProd(transMatrix, [[x], [y]]).flat();
+}
+
+// function rotateY(y, rad) {
+//   const transMatrix = [
+//     [Math.cos(rad), -Math.sin(rad)],
+//     [Math.sin(rad), Math.cos(rad)],
+//   ];
+
+//   return MatrixProd(transMatrix, [[0], [y]])[1][0];
+// }
+
+function ShapeSettings({
+  canvasContext,
+  setShapeIndexRef,
+  canvasBounds,
+  canvasObjects,
+  rotations,
+}) {
   const [shapeIndex, setShapeIndex] = useState(-1);
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
@@ -108,21 +133,53 @@ function ShapeSettings({ canvasContext, rotations, setShapeIndexRef }) {
   }, [shapeIndex]);
   return (
     <div id="shape_settings" ref={divRef}>
-      <input
-        type="range"
-        step={1}
-        min={-180}
-        max={180}
-        value={
-          rotations.current.has(shapeIndex)
-            ? rotations.current.get(shapeIndex)
-            : 0
-        }
-        onInput={(v: BaseSyntheticEvent) => {
-          rotations.current.set(shapeIndex, v.target.value);
-          forceUpdate();
+      <button
+        id="left"
+        onClick={() => {
+          const selectedBounds = canvasBounds.current[shapeIndex];
+          console.log(
+            "rot: bounds:" + JSON.stringify(canvasBounds.current[shapeIndex])
+          );
+          const xsum = selectedBounds.reduce((acc, point) => acc + point.x, 0);
+          const ysum = selectedBounds.reduce((acc, point) => acc + point.y, 0);
+          console.log("rot: xsum: " + xsum);
+          console.log("rot: ysum: " + ysum);
+          const mid = { x: xsum / 4, y: ysum / 4 };
+          const rotated = selectedBounds.map((point) => {
+            const rp = rotate(point.x - mid.x, point.y - mid.y, -0.2);
+            return { x: rp[0] + mid.x, y: rp[1] + mid.y };
+          });
+          canvasBounds.current[shapeIndex] = rotated;
+
+          // const objRotated = canvasObjects.current[shapeIndex].points.map(
+          //   (point) => {
+          //     const rp = rotate(point.x, point.y, -0.2);
+          //     return { x: rp[0], y: rp[1] };
+          //   }
+          // );
+          // canvasObjects.current[shapeIndex].points = objRotated;
+          rotations.current[shapeIndex] -= 0.2;
         }}
-      ></input>
+      >
+        left
+      </button>
+      <button
+        id="right"
+        onClick={() => {
+          const selectedBounds = canvasBounds.current[shapeIndex];
+          const xsum = selectedBounds.reduce((point, acc) => acc + point.x);
+          const ysum = selectedBounds.reduce((point, acc) => acc + point.y);
+          const mid = { x: xsum / 4, y: ysum / 4 };
+          const rotated = selectedBounds.map((point) => ({
+            // x: rotateX(point.x, 0.2),
+            // y: rotateY(point.y, 0.2),
+          }));
+          canvasBounds.current[shapeIndex] = rotated;
+        }}
+      >
+        right
+      </button>
+
       {shapeIndex}
     </div>
   );
@@ -136,7 +193,7 @@ function MyCanvas() {
   const [height, setHeight] = useState(window.innerHeight);
   const canvasObjects = useRef<any>([]);
   const canvasBounds = useRef<any>([]);
-  const rotations = useRef<Map<number, number>>(new Map());
+  const rotations = useRef<any>([]);
 
   const currentMode = useRef(Mode.Default);
   const lastMouseEvent = useRef<null | MouseEvent>(null);
@@ -236,36 +293,74 @@ function MyCanvas() {
 
       const points = obj.points;
       console.log(canvasBounds.current[index]);
-      const topLeftBoundX = Math.min(
-        ...canvasBounds.current[index].map((point) => point.x)
-      );
-      const topLeftBoundY = Math.min(
-        ...canvasBounds.current[index].map((point) => point.y)
-      );
 
-      const maxx = Math.max(
-        ...canvasBounds.current[index].map((point) => point.x)
+      const toScaleX =
+        dist(canvasBounds.current[index][0], canvasBounds.current[index][3]) /
+        obj.originalWidth;
+      const toScaleY =
+        dist(canvasBounds.current[index][0], canvasBounds.current[index][1]) /
+        obj.originalHeight;
+      console.log(
+        "scale: x:" +
+          toScaleX +
+          " : " +
+          toScaleY +
+          " " +
+          JSON.stringify(canvasBounds.current[index]) +
+          " " +
+          obj.originalWidth
       );
-
-      const maxy = Math.max(
-        ...canvasBounds.current[index].map((point) => point.y)
+      const xsum = canvasBounds.current[index].reduce(
+        (acc, point) => acc + point.x,
+        0
       );
-      const toScaleX = Math.abs(maxx - topLeftBoundX) / obj.originalWidth;
-      const toScaleY = Math.abs(maxy - topLeftBoundY) / obj.originalHeight;
-      const screenPoints = points.map((point) => ({
-        x:
-          topLeftBoundX +
-          shapeTranslateX +
-          translate.current.x +
-          tempTranslate.current.x +
-          scaleYX(scaleXX(point.x, toScaleX), toScaleY),
-        y:
-          topLeftBoundY +
-          shapeTranslateY +
-          translate.current.y +
-          tempTranslate.current.y +
-          scaleYY(scaleXY(point.y, toScaleX), toScaleY),
-      }));
+      const ysum = canvasBounds.current[index].reduce(
+        (acc, point) => acc + point.y,
+        0
+      );
+      const mid = { x: xsum / 4, y: ysum / 4 };
+      const screenPoints = points.map((point) => {
+        let np = scaleX(point.x, point.y, toScaleX);
+        np = scaleY(np[0], np[1], toScaleY);
+        np = rotate(np[0], np[1], rotations.current[index]);
+        // const objRotated = canvasObjects.current[shapeIndex].points.map(
+        //   (point) => {
+        //     const rp = rotate(point.x, point.y, -0.2);
+        //     return { x: rp[0], y: rp[1] };
+        //   }
+        // );
+        // canvasObjects.current[shapeIndex].points = objRotated;
+        return {
+          x:
+            np[0] +
+            mid.x +
+            shapeTranslateX +
+            translate.current.x +
+            tempTranslate.current.x,
+          y:
+            np[1] +
+            mid.y +
+            shapeTranslateY +
+            translate.current.y +
+            tempTranslate.current.y,
+        };
+        // x:
+        //   mid.x +
+        //   shapeTranslateX +
+        //   translate.current.x +
+        //   tempTranslate.current.x +
+        //   scaleYX(scaleXX(point.x, toScaleX), toScaleY),
+        // y:
+        //   mid.y +
+        //   shapeTranslateY +
+        //   translate.current.y +
+        //   tempTranslate.current.y +
+        //   scaleYY(scaleXY(point.y, toScaleX), toScaleY),
+      });
+      // .map((point) => {
+      //   const np = rotate(point.x, point.y, -0.1);
+      //   return { x: np[0] + mid.x, y: np[1] + mid.y };
+      // });
 
       canvasContext.current.beginPath();
       canvasContext.current!.moveTo(screenPoints[0].x, screenPoints[0].y);
@@ -286,21 +381,6 @@ function MyCanvas() {
       canvasContext.current.closePath();
       canvasContext.current.stroke();
       if (index === selectedSShapeIndex.current) {
-        canvasContext.current!.strokeStyle = "purple";
-        stc++;
-        canvasContext.current?.strokeRect(
-          topLeftBoundX +
-            translate.current.x +
-            tempTranslate.current.x +
-            shapeTranslateX,
-          topLeftBoundY +
-            translate.current.y +
-            tempTranslate.current.y +
-            shapeTranslateY,
-          maxx - topLeftBoundX,
-          maxy - topLeftBoundY
-        );
-        canvasContext.current!.strokeStyle = "black";
         const points = canvasBounds.current[index].map((point) => ({
           x:
             point.x +
@@ -313,6 +393,22 @@ function MyCanvas() {
             tempTranslate.current.y +
             shapeTranslateY,
         }));
+
+        canvasContext.current!.strokeStyle = "purple";
+        canvasContext.current!.beginPath();
+        canvasContext.current!.moveTo(points[0].x, points[0].y);
+
+        for (let i = 1; i < points.length; i++) {
+          canvasContext.current.lineTo(
+            points[i].x,
+
+            points[i].y
+          );
+        }
+
+        canvasContext.current!.lineTo(points[0].x, points[0].y);
+        canvasContext.current!.stroke();
+        canvasContext.current!.strokeStyle = "black";
         // const points = [
         //   {
         //     x:
@@ -439,20 +535,20 @@ function MyCanvas() {
         originalHeight,
         points: [
           {
-            x: 0,
-            y: 0,
+            x: -originalWidth / 2,
+            y: -originalHeight / 2,
           },
           {
-            x: originalWidth,
-            y: 0,
+            x: originalWidth / 2,
+            y: -originalHeight / 2,
           },
           {
-            x: originalWidth,
-            y: originalHeight,
+            x: originalWidth / 2,
+            y: originalHeight / 2,
           },
           {
-            x: 0,
-            y: originalHeight,
+            x: -originalWidth / 2,
+            y: originalHeight / 2,
           },
         ],
       });
@@ -474,6 +570,7 @@ function MyCanvas() {
           y: tempRectangle.current!.y1 - translate.current.y,
         },
       ]);
+      rotations.current.push(0);
       tempRectangle.current = null;
     } else if (
       currentMode.current === Mode.Default &&
@@ -690,8 +787,10 @@ function MyCanvas() {
       ></canvas>
       <ShapeSettings
         canvasContext={canvasContext}
-        rotations={rotations}
         setShapeIndexRef={setShapeIndexChild}
+        canvasBounds={canvasBounds}
+        canvasObjects={canvasObjects}
+        rotations={rotations}
       />
     </div>
   );
