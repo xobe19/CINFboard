@@ -1,0 +1,21 @@
+export enum Shape {
+  rect = "rect",
+  circle = "circle",
+  triangle = "triangle",
+  man_svg = "man_svg",
+  heart_svg = "heart_svg",
+  hexagon = "hexagon",
+  star = "star",
+  pentagon = "pentagon",
+  ninja_star = "ninja_star",
+  health = "health",
+  cylinder = "cylinder",
+  cube = "cube",
+  man_pushing = "man_pushing",
+  diamond = "diamond",
+  custom = "custom",
+
+  // heart_svg = "heart_svg",
+  // tree_svg = "tree_svg",
+  // svg = "svg",
+}
