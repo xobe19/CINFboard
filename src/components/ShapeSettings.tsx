@@ -1,8 +1,8 @@
-import {useRef, useEffect, useReducer, useState } from "react"
+import React, { useRef, useEffect, useReducer, useState } from "react";
 import { Shape } from "../constants/Shape";
 import { extractPathFromSVGFile } from "../helpers/pathExtractor";
 import { svgs } from "../constants/shape_data";
-import { imageGen  } from "../helpers/imageGen";
+import { imageGen } from "../helpers/imageGen";
 import { rotate } from "../transformation_helpers/rotation_helper";
 export function ShapeSettings({
   canvasContext,
@@ -107,4 +107,3 @@ export function ShapeSettings({
     </div>
   );
 }
-

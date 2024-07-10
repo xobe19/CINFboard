@@ -1,8 +1,8 @@
 // let test_str =
 //   "M5 6.2489C5.5 4.61929 6.61929 3.5 8 3.5H12C16.7225 3.5 20.5 7.55843 20.5 12.5C20.5 14.3559 19.969 16.0837 19.0565 17.5193C18.5336 18.3421 18.1666 19.2028 18.1666 20.0823V21C18.1666 21.2761 17.9428 21.5 17.6666 21.5C17.3905 21.5 17.1666 21.2761 17.1666 21V20.0823C17.1666 18.9287 17.6449 17.876 18.2126 16.9829C19.0243 15.7058 19.5 14.1637 19.5 12.5C19.5 12.332 19.4952 12.1653 19.4856 12H10.5625L10.719 13.2519C10.8682 14.4456 9.93743 15.5 8.73444 15.5H6.5V16.5C6.5 17.8807 7.61929 19 9 19H9.5C9.77614 19 10 19.2239 10 19.5C10 19.7761 9.77614 20 9.5 20H9C7.067 20 5.5 18.433 5.5 16.5V15.5H5C3.89543 15.5 3 14.6046 3 13.5V9.5C3 8.39543 3.89543 7.5 5 7.5H5.5V6ZM8.73444 14.5C9.33593 14.5 9.80132 13.9728 9.72671 13.376L9.53873 11.8721C9.50784 11.625 9.50784 11.375 9.53873 11.1279L9.72671 9.62403C9.80132 9.02718 9.33593 8.5 8.73444 8.5H5C4.44772 8.5 4 8.94772 4 9.5V13.5C4 14.0523 4.44772 14.5 5 14.5H8.73444ZM12 4.5C15.6392 4.5 18.7087 7.27998 19.3688 11H10.5625L10.719 9.74807C10.8682 8.55436 9.93743 7.5 8.73444 7.5H6.5V6C6.5 5.17157 7.17157 4.5 8 4.5H12Z";
 
-import { replaceArcToBezier } from "./arcToBezier.ts";
-import { dist } from "./line.ts";
+import { replaceArcToBezier } from "./arcToBezier";
+import { dist } from "./line";
 
 let MatrixProd = (A, B) =>
   A.map((row, i) =>
@@ -35,7 +35,7 @@ function scaleY(x, y, fac) {
   return MatrixProd(transMatrix, [[x], [y]]).flat();
 }
 
-export class TODOFindABetterName {
+export class SVGParseReparse {
   static move_regex = /^M([-\d\.]+)[\s,]([-\d\.]+)/;
   static line_regex = /^L([-\d\.]+)[\s,]([-\d\.]+)/;
   static bezier_regex =
@@ -82,7 +82,7 @@ export class TODOFindABetterName {
       console.log(matcher);
 
       if (test_str[0] === "A") {
-        let arc_matcher = test_str.match(TODOFindABetterName.arc_regex);
+        let arc_matcher = test_str.match(SVGParseReparse.arc_regex);
         let arc_string = arc_matcher[0];
         let curves_string = replaceArcToBezier(curr, arc_string);
         test_str = curves_string + test_str.slice(arc_string.length);
@@ -91,32 +91,32 @@ export class TODOFindABetterName {
 
       switch (test_str[0]) {
         case "M":
-          matcher = test_str.match(TODOFindABetterName.move_regex);
+          matcher = test_str.match(SVGParseReparse.move_regex);
           console.log("pehle bhi" + matcher + test_str);
           break;
         case "C":
-          matcher = test_str.match(TODOFindABetterName.bezier_regex);
+          matcher = test_str.match(SVGParseReparse.bezier_regex);
           break;
         case "S":
-          matcher = test_str.match(TODOFindABetterName.smooth_regex);
+          matcher = test_str.match(SVGParseReparse.smooth_regex);
           break;
         case "V":
-          matcher = test_str.match(TODOFindABetterName.vert_regex);
+          matcher = test_str.match(SVGParseReparse.vert_regex);
           break;
         case "H":
-          matcher = test_str.match(TODOFindABetterName.hori_regex);
+          matcher = test_str.match(SVGParseReparse.hori_regex);
           break;
         case "Z":
-          matcher = test_str.match(TODOFindABetterName.z_regex);
+          matcher = test_str.match(SVGParseReparse.z_regex);
           break;
         case "L":
-          matcher = test_str.match(TODOFindABetterName.line_regex);
+          matcher = test_str.match(SVGParseReparse.line_regex);
           break;
       }
       let all_points;
       try {
         all_points = matcher
-          .slice(1, 1 + TODOFindABetterName.point_cnt[test_str[0]])
+          .slice(1, 1 + SVGParseReparse.point_cnt[test_str[0]])
           .map((e) => Number(e));
       } catch (err) {
         console.log(
@@ -127,10 +127,10 @@ export class TODOFindABetterName {
       }
 
       const points_x = all_points.filter((_, indx) =>
-        TODOFindABetterName.x_indexes[test_str[0]].includes(indx)
+        SVGParseReparse.x_indexes[test_str[0]].includes(indx)
       );
       const points_y = all_points.filter(
-        (_, indx) => !TODOFindABetterName.x_indexes[test_str[0]].includes(indx)
+        (_, indx) => !SVGParseReparse.x_indexes[test_str[0]].includes(indx)
       );
 
       if (test_str[0] === "H") {

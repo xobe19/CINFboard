@@ -11,8 +11,8 @@ import React, {
   useReducer,
 } from "react";
 import "./index.css";
-import { Line, dist, slope } from "./line.ts";
-import { TODOFindABetterName } from "./parser.ts";
+import { Line, dist, slope } from "./line";
+import { SVGParseReparse } from "./parser";
 const root = createRoot(document.getElementById("root")!);
 import { Shape } from "./constants/Shape";
 import { imageGen } from "./helpers/imageGen";
@@ -26,10 +26,6 @@ import { rotate } from "./transformation_helpers/rotation_helper";
 import { ShapeSettings } from "./components/ShapeSettings";
 
 import { ToolBox } from "./components/Toolbox";
-
-
-
-
 
 // function rotateY(y, rad) {
 //   const transMatrix = [
@@ -391,7 +387,7 @@ function MyCanvas() {
           canvasContext.current.stroke(objPath);
         }
       } else {
-        let todo: TODOFindABetterName = obj.todo;
+        let todo: SVGParseReparse = obj.todo;
         objPath = todo.fitWithin(
           canvasBounds.current[index],
           rotations.current[index],
@@ -704,7 +700,7 @@ function MyCanvas() {
       } else {
         console.log("CDN: " + JSON.stringify(selectedDrawable.current));
         console.log("CDN: " + svgs["custom"]);
-        const todo = new TODOFindABetterName(
+        const todo = new SVGParseReparse(
           svgs[selectedDrawable.current]
           // viewBox[selectedDrawable.current][0],
           // viewBox[selectedDrawable.current][1]

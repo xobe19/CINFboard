@@ -1,7 +1,6 @@
 // p1 and p2 are opp to each other
 
-
-import { Line, dist, slope } from "./line.ts";
+import { Line, dist, slope } from "../line";
 
 export function findNewOtherTwo(p1, p2, slope) {
   const recSlope = -1 / slope;

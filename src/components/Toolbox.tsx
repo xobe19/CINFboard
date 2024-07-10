@@ -1,8 +1,8 @@
-import {useRef, useEffect, useReducer} from "react"
+import React, { useRef, useEffect, useReducer } from "react";
 import { Shape } from "../constants/Shape";
 import { extractPathFromSVGFile } from "../helpers/pathExtractor";
 import { svgs } from "../constants/shape_data";
-import { imageGen  } from "../helpers/imageGen";
+import { imageGen } from "../helpers/imageGen";
 const drawables = Object.values(Shape);
 export function ToolBox({ selectedDrawable }) {
   const divRef = useRef<HTMLDivElement | null>(null);
@@ -109,4 +109,3 @@ export function ToolBox({ selectedDrawable }) {
     </div>
   );
 }
-

@@ -1,4 +1,4 @@
-import path from "path";
+import path, { resolve } from "path";
 import url from "url";
 export default {
   entry: "./src/index.tsx",
@@ -7,6 +7,9 @@ export default {
     filename: "bundle.js",
   },
   mode: "development",
+  resolve: {
+    extensions: [".ts", ".js", ".json", ".tsx", ".jsx"],
+  },
   module: {
     rules: [
       {
