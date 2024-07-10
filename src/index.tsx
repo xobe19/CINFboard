@@ -29,6 +29,7 @@ enum Shape {
   cube = "cube",
   man_pushing = "man_pushing",
   diamond = "diamond",
+  custom = "custom",
 
   // heart_svg = "heart_svg",
   // tree_svg = "tree_svg",
@@ -38,6 +39,14 @@ const arrow_cursor = `data:image/svg+xml,base64%2CPD94bWwgdmVyc2lvbj0iMS4wIiBlbm
 
 const imageGen = (svgPathString) =>
   `data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="${svgPathString}" /></svg>`;
+
+const extractPathFromSVGFile = (file_content) => {
+  console.log("CDN: " + file_content);
+  const regex = /path d="([^"]+)"/;
+  const match = file_content.match(regex)[1];
+  console.log("CDN: " + match);
+  return match;
+};
 
 const svgs = {
   heart_svg:
@@ -147,6 +156,7 @@ function rotate(x, y, rad) {
 
 function ToolBox({ selectedDrawable }) {
   const divRef = useRef<HTMLDivElement | null>(null);
+  const inputFileRef = useRef<HTMLInputElement | null>(null);
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const residualRef = useRef<number | null>(null);
   useEffect(() => {
@@ -170,6 +180,31 @@ function ToolBox({ selectedDrawable }) {
 
   return (
     <div id="toolbox">
+      <input
+        type="file"
+        id="custom_svg_upload"
+        style={{ display: "none" }}
+        ref={inputFileRef}
+        onChange={() => {
+          console.log("CDN: exec??");
+          let file = inputFileRef.current.files[0];
+          console.log("CDN: " + file);
+          while (file === undefined) {
+            console.log("CDN: file" + JSON.stringify(file));
+            file = inputFileRef.current.files[0];
+          }
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const file_content = ev.target.result;
+            svgs["custom"] = extractPathFromSVGFile(file_content);
+            console.log("CDN: ev l" + svgs["custom"]);
+          };
+          reader.readAsText(file, "UTF-8");
+
+          selectedDrawable.current = "custom";
+          forceUpdate();
+        }}
+      ></input>
       <div id="toolbox-shadow">
         <div
           className="shadow bg-white"
@@ -183,7 +218,24 @@ function ToolBox({ selectedDrawable }) {
       </div>
       <div id="toolbox-foreground" ref={divRef}>
         {drawables.map((drawable) => {
-          return (
+          return drawable === "custom" ? (
+            <label htmlFor="custom_svg_upload">
+              <a>
+                <img
+                  src={`./assets/${drawable}.svg`}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).onerror = null;
+                    (e.target as HTMLImageElement).src = imageGen(
+                      svgs[drawable]
+                    );
+                    // e.target.error = null;
+                  }}
+                  width={20}
+                  height={20}
+                ></img>
+              </a>
+            </label>
+          ) : (
             <a
               onClick={() => {
                 selectedDrawable.current = drawable;
@@ -300,6 +352,12 @@ function ShapeSettings({
       >
         right
       </button>
+
+      {canvasObjects.current[shapeIndex]?.type === Shape.rect ? (
+        <div>rect</div>
+      ) : (
+        <div> not rect </div>
+      )}
 
       {shapeIndex}
     </div>
@@ -969,6 +1027,8 @@ function MyCanvas() {
           ],
         });
       } else {
+        console.log("CDN: " + JSON.stringify(selectedDrawable.current));
+        console.log("CDN: " + svgs["custom"]);
         const todo = new TODOFindABetterName(
           svgs[selectedDrawable.current]
           // viewBox[selectedDrawable.current][0],
